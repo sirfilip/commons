@@ -1,1 +1,1 @@
-# go-commons
+# go commmon structures
