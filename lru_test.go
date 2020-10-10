@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
-	"log"
 	"testing"
 )
 
@@ -38,7 +37,7 @@ func assertLRUEqual(t *testing.T, expected, given *lru) {
 }
 
 func TestLRUCacheOps(t *testing.T) {
-	tests := map[string]struct {
+	for title, test := range map[string]struct {
 		lru   LRU
 		cache []struct {
 			key string
@@ -181,9 +180,7 @@ func TestLRUCacheOps(t *testing.T) {
 				},
 			},
 		},
-	}
-
-	for title, test := range tests {
+	} {
 		t.Run(title, func(t *testing.T) {
 			for _, item := range test.cache {
 				test.lru.Set(item.key, item.val)
@@ -200,7 +197,7 @@ func TestLRUCacheOps(t *testing.T) {
 }
 
 func TestLRUCacheSERDE(t *testing.T) {
-	tests := map[string]struct {
+	for title, test := range map[string]struct {
 		lru   LRU
 		cache []struct {
 			key string
@@ -257,9 +254,7 @@ func TestLRUCacheSERDE(t *testing.T) {
 				},
 			},
 		},
-	}
-
-	for title, test := range tests {
+	} {
 		t.Run(title, func(t *testing.T) {
 			for _, item := range test.cache {
 				test.lru.Set(item.key, item.val)
@@ -270,7 +265,6 @@ func TestLRUCacheSERDE(t *testing.T) {
 			if err != nil {
 				t.Errorf("Got unexpected error: %v", err)
 			}
-			log.Print(buff.String())
 			r := bufio.NewReader(&buff)
 			des, err := DeserializeLRU(r)
 			if err != nil {
