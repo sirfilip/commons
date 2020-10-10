@@ -1,6 +1,10 @@
 package commons
 
-import "errors"
+import (
+	"encoding/json"
+	"errors"
+	"io"
+)
 
 var ErrNotFound = errors.New("Not found")
 
@@ -84,4 +88,60 @@ func (l *lru) add(node *lruNode) {
 		l.head = node
 	}
 	l.cache[node.key] = node
+}
+
+type lruNodeSerializer struct {
+	Key string
+	Val []byte
+}
+
+type lruSerializer struct {
+	Capacity int
+	Cache    []lruNodeSerializer
+}
+
+func SerializeLRU(w io.Writer, l *lru) error {
+	ls := lruSerializer{Capacity: l.capacity, Cache: make([]lruNodeSerializer, len(l.cache))}
+
+	i := 0
+	currentNode := l.head
+
+	for currentNode != nil {
+		ls.Cache[i] = lruNodeSerializer{
+			Key: currentNode.key,
+			Val: currentNode.val,
+		}
+		i++
+		currentNode = currentNode.next
+	}
+
+	return json.NewEncoder(w).Encode(ls)
+}
+
+func DeserializeLRU(r io.Reader) (*lru, error) {
+	ls := lruSerializer{}
+	err := json.NewDecoder(r).Decode(&ls)
+	if err != nil {
+		return nil, err
+	}
+	l := &lru{capacity: ls.Capacity, cache: make(map[string]*lruNode)}
+	if len(ls.Cache) > 0 {
+		var prev *lruNode
+		for i, item := range ls.Cache {
+			node := &lruNode{key: item.Key, val: item.Val}
+			l.cache[node.key] = node
+			if i == 0 {
+				l.head = node
+			}
+			if i == len(ls.Cache)-1 {
+				l.tail = node
+			}
+			if prev != nil {
+				node.prev = prev
+				prev.next = node
+			}
+			prev = node
+		}
+	}
+	return l, nil
 }

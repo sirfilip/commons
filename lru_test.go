@@ -1,8 +1,10 @@
 package commons
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
+	"log"
 	"testing"
 )
 
@@ -16,7 +18,26 @@ func assertEqualBytes(t *testing.T, expected, given []byte) {
 	}
 }
 
-func TestLRUCache(t *testing.T) {
+func assertLRUEqual(t *testing.T, expected, given *lru) {
+	t.Helper()
+	if expected.capacity != given.capacity {
+		t.Errorf("LRUs are not equal %#v => %#v", expected, given)
+	}
+	if len(expected.cache) != len(given.cache) {
+		t.Errorf("LRUs are not equal %#v => %#v", expected, given)
+	}
+	expectedCurr := expected.head
+	givenCurr := given.head
+	for expectedCurr != nil {
+		if !bytes.Equal(expectedCurr.val, givenCurr.val) {
+			t.Errorf("LRUs are not equal %#v => %#v", expected, given)
+		}
+		expectedCurr = expectedCurr.next
+		givenCurr = givenCurr.next
+	}
+}
+
+func TestLRUCacheOps(t *testing.T) {
 	tests := map[string]struct {
 		lru   LRU
 		cache []struct {
@@ -174,6 +195,88 @@ func TestLRUCache(t *testing.T) {
 				}
 				assertEqualBytes(t, expect.val, val)
 			}
+		})
+	}
+}
+
+func TestLRUCacheSERDE(t *testing.T) {
+	tests := map[string]struct {
+		lru   LRU
+		cache []struct {
+			key string
+			val []byte
+		}
+	}{
+		"negative capacity SERDE": {
+			lru: NewLRU(-1),
+			cache: []struct {
+				key string
+				val []byte
+			}{},
+		},
+		"zero capacity SERDE": {
+			lru: NewLRU(0),
+			cache: []struct {
+				key string
+				val []byte
+			}{},
+		},
+		"lru full": {
+			lru: NewLRU(2),
+			cache: []struct {
+				key string
+				val []byte
+			}{
+				{
+					key: "one",
+					val: []byte("1"),
+				},
+				{
+					key: "two",
+					val: []byte("2"),
+				},
+				{
+					key: "one",
+					val: []byte("1"),
+				},
+				{
+					key: "three",
+					val: []byte("3"),
+				},
+			},
+		},
+		"lru not filled": {
+			lru: NewLRU(2),
+			cache: []struct {
+				key string
+				val []byte
+			}{
+				{
+					key: "one",
+					val: []byte("1"),
+				},
+			},
+		},
+	}
+
+	for title, test := range tests {
+		t.Run(title, func(t *testing.T) {
+			for _, item := range test.cache {
+				test.lru.Set(item.key, item.val)
+			}
+			var buff bytes.Buffer
+
+			err := SerializeLRU(&buff, test.lru.(*lru))
+			if err != nil {
+				t.Errorf("Got unexpected error: %v", err)
+			}
+			log.Print(buff.String())
+			r := bufio.NewReader(&buff)
+			des, err := DeserializeLRU(r)
+			if err != nil {
+				t.Errorf("Got unexpected error: %v", err)
+			}
+			assertLRUEqual(t, test.lru.(*lru), des)
 		})
 	}
 }
