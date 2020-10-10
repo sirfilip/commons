@@ -77,6 +77,18 @@ func TestTrie_Autocomplete(t *testing.T) {
 			maxResults: 2,
 			expect:     []string{},
 		},
+		"supports phrases": {
+			memory:     []string{"nice", "nice weather", "other"},
+			prefix:     "ni",
+			maxResults: 100,
+			expect:     []string{"nice", "nice weather"},
+		},
+		"works with negative max results": {
+			memory:     []string{"nice", "nice weather", "other"},
+			prefix:     "ni",
+			maxResults: -1,
+			expect:     []string{},
+		},
 	} {
 		t.Run(title, func(t *testing.T) {
 			tr := NewTrie()

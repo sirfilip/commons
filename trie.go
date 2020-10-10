@@ -4,6 +4,11 @@ import (
 	"strings"
 )
 
+var trans = map[string]string{
+	" ": "|",
+	"|": " ",
+}
+
 type Trie interface {
 	Add(word string)
 	Search(word string) bool
@@ -55,6 +60,11 @@ func (t *trie) Search(word string) bool {
 func (t *trie) Autocomplete(prefix string, maxResults int) []string {
 	var suggestions []string
 	var found bool
+
+	if maxResults < 1 {
+		return suggestions
+	}
+
 	curr := t.root
 	letters := strings.Split(prefix, "")
 	for _, letter := range letters {
@@ -90,6 +100,9 @@ SuggestionsSearch:
 				}
 				continue
 			}
+			if translation, ok := trans[letter]; ok {
+				letter = translation
+			}
 			stack = append(stack, struct {
 				node   *trieNode
 				prefix string
@@ -103,6 +116,9 @@ SuggestionsSearch:
 }
 
 func (t *trie) addLetter(node *trieNode, letter string, isLastLetter bool) *trieNode {
+	if translation, ok := trans[letter]; ok {
+		letter = translation
+	}
 	next, ok := node.memory[letter]
 	if !ok {
 		next = newTrieNode()
