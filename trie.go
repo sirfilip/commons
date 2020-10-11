@@ -48,6 +48,9 @@ func (t trie) Search(word string) bool {
 	letters := strings.Split(strings.TrimSpace(word), "")
 	curr := t.root
 	for i, letter := range letters {
+		if translation, ok := trans[letter]; ok {
+			letter = translation
+		}
 		isLastLetter := i == len(letters)-1
 		curr, found = t.search(curr, letter, isLastLetter)
 		if !found {

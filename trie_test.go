@@ -30,13 +30,14 @@ func TestTrie_Search(t *testing.T) {
 		expectation map[string]bool
 	}{
 		"it finds the correct words": {
-			words: []string{"bad", "cat", "catter"},
+			words: []string{"bad", "cat", "catter", "a phrase"},
 			expectation: map[string]bool{
 				"bad":        true,
 				"cat":        true,
 				"catter":     true,
 				"ca":         false,
 				"   cat    ": true,
+				"a phrase":   true,
 			},
 		},
 	} {
