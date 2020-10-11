@@ -123,32 +123,7 @@ func BenchmarkTrie_Autocomplete(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		r = tr.Autocomplete("b", 100)
-		for range r {
-		}
-	}
-}
-
-func BenchmarkTrie_AutocompleteConcurrent(b *testing.B) {
-	var r []string
-	tr := NewTrie()
-	for i := 2; i < 100; i++ {
-		tr.Add(strings.Repeat("b", i))
-		tr.Add("b" + strings.Repeat("a", i))
-		tr.Add("b" + strings.Repeat("c", i))
-		tr.Add("b" + strings.Repeat("d", i))
-		tr.Add("b" + strings.Repeat("e", i))
-		tr.Add("b" + strings.Repeat("f", i))
-		tr.Add("b" + strings.Repeat("g", i))
-		tr.Add("b" + strings.Repeat("h", i))
-		tr.Add("b" + strings.Repeat("i", i))
-		tr.Add("b" + strings.Repeat("j", i))
-		tr.Add("b" + strings.Repeat("k", i))
-		tr.Add("b" + strings.Repeat("l", i))
-	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		r = tr.AutocompleteConcurrent("b", 100)
+		r = tr.Autocomplete("b", 10000)
 		for range r {
 		}
 	}
